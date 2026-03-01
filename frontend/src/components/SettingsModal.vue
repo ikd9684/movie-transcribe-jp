@@ -1,0 +1,251 @@
+<template>
+  <div class="modal-overlay" @click.self="$emit('close')" @keydown.esc="$emit('close')">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="設定">
+      <h2>設定</h2>
+
+      <section>
+        <h3>文字起こし</h3>
+        <div class="field">
+          <label for="whisperModel">Whisper モデル</label>
+          <select id="whisperModel" v-model="local.whisperModel">
+            <option value="tiny">tiny</option>
+            <option value="base">base</option>
+            <option value="small">small</option>
+            <option value="medium">medium</option>
+            <option value="large-v3">large-v3</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="whisperLanguage">音声言語</label>
+          <select id="whisperLanguage" v-model="local.whisperLanguage">
+            <option value="auto">自動検出</option>
+            <option value="en">English</option>
+            <option value="zh">中文</option>
+            <option value="ko">한국어</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="pt">Portuguese</option>
+          </select>
+        </div>
+      </section>
+
+      <section>
+        <h3>翻訳</h3>
+        <div class="field">
+          <label for="ollamaBaseUrl">Ollama URL</label>
+          <input id="ollamaBaseUrl" v-model="local.ollamaBaseUrl" type="text" />
+        </div>
+        <div class="field">
+          <label for="translationModel">LLM モデル</label>
+          <input id="translationModel" v-model="local.translationModel" type="text" />
+        </div>
+        <div class="field">
+          <label for="translationParallel">翻訳並列数</label>
+          <input
+            id="translationParallel"
+            v-model.number="local.translationParallel"
+            type="number"
+            min="1"
+            max="8"
+          />
+        </div>
+        <div class="field">
+          <label for="translationContextWindow">コンテキスト窓</label>
+          <input
+            id="translationContextWindow"
+            v-model.number="local.translationContextWindow"
+            type="number"
+            min="0"
+            max="4"
+          />
+        </div>
+      </section>
+
+      <section>
+        <h3>字幕</h3>
+        <div class="field">
+          <label for="subtitleFontSize">フォントサイズ</label>
+          <input
+            id="subtitleFontSize"
+            v-model.number="local.subtitleFontSize"
+            type="number"
+            min="12"
+            max="48"
+          />
+        </div>
+        <div class="field">
+          <label for="subtitlePosition">字幕位置</label>
+          <select id="subtitlePosition" v-model="local.subtitlePosition">
+            <option value="bottom">下部中央</option>
+            <option value="top">上部中央</option>
+          </select>
+        </div>
+      </section>
+
+      <section>
+        <h3>出力</h3>
+        <div class="field">
+          <label for="outputCrf">
+            動画品質 (CRF)
+            <span class="hint">数値が小さいほど高画質・大容量</span>
+          </label>
+          <input
+            id="outputCrf"
+            v-model.number="local.outputCrf"
+            type="number"
+            min="18"
+            max="28"
+          />
+        </div>
+      </section>
+
+      <div class="actions">
+        <button class="btn-secondary" @click="onReset">リセット</button>
+        <button class="btn-primary" @click="onSave">保存して閉じる</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { reactive, onMounted, onUnmounted } from 'vue'
+import { useSettings, type AppSettings } from '../composables/useSettings'
+
+const emit = defineEmits<{ close: [] }>()
+
+const { settings, save, reset } = useSettings()
+
+const local = reactive<AppSettings>({ ...settings })
+
+function onSave() {
+  Object.assign(settings, local)
+  save()
+  emit('close')
+}
+
+function onReset() {
+  reset()
+  Object.assign(local, settings)
+}
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') emit('close')
+}
+
+onMounted(() => document.addEventListener('keydown', onKeydown))
+onUnmounted(() => document.removeEventListener('keydown', onKeydown))
+</script>
+
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  color: #1a1a1a;
+}
+
+h2 {
+  margin: 0 0 16px;
+  font-size: 1.25rem;
+}
+
+section {
+  margin-bottom: 20px;
+}
+
+h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #666;
+  letter-spacing: 0.05em;
+  margin: 0 0 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.hint {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #9ca3af;
+  margin-left: 6px;
+}
+
+input,
+select {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+input:focus,
+select:focus {
+  border-color: #6366f1;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-primary {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #4f46e5;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #f3f4f6;
+}
+</style>

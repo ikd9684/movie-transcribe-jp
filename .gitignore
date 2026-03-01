@@ -1,0 +1,15 @@
+# Python
+backend/.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+backend/storage/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Env
+.env
+backend/.env

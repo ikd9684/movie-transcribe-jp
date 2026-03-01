@@ -34,8 +34,23 @@
 Content-Type: multipart/form-data
 
 Form Fields:
-  file: (binary) 動画ファイル
+  file:     (binary) 動画ファイル
+  settings: (string, JSON) ジョブ設定（省略時はデフォルト値）
 ```
+
+#### settings フィールド（JSON オブジェクト）
+
+| キー | 型 | デフォルト | 説明 |
+|------|----|-----------|------|
+| `whisper_model` | string | `"large-v3"` | Whisper モデル名 (`tiny`/`base`/`small`/`medium`/`large-v3`) |
+| `whisper_language` | string | `"auto"` | 音声言語コード (`auto`/`en`/`zh`/`ko` 等) |
+| `ollama_base_url` | string | `"http://localhost:11434"` | Ollama サーバー URL |
+| `translation_model` | string | `"gpt-oss:20b"` | 翻訳に使用する LLM モデル名 |
+| `translation_parallel` | integer (1-8) | `4` | 翻訳並列数 |
+| `translation_context_window` | integer (0-4) | `2` | 翻訳コンテキスト窓（前後セグメント数） |
+| `subtitle_font_size` | integer (12-48) | `24` | 字幕フォントサイズ (px) |
+| `subtitle_position` | string | `"bottom"` | 字幕位置 (`"bottom"` / `"top"`) |
+| `output_crf` | integer (18-28) | `23` | 出力動画品質 CRF 値（小さいほど高画質） |
 
 ### バリデーション
 
@@ -270,11 +285,19 @@ Content-Length: (ファイルサイズ)
 
 ## cURL コマンド例
 
-### アップロード
+### アップロード（デフォルト設定）
 
 ```bash
 curl -X POST http://localhost:8000/api/upload \
   -F "file=@/path/to/video.mp4"
+```
+
+### アップロード（カスタム設定）
+
+```bash
+curl -X POST http://localhost:8000/api/upload \
+  -F "file=@/path/to/video.mp4" \
+  -F 'settings={"whisper_model":"small","translation_parallel":2,"output_crf":20}'
 ```
 
 ### SSE ストリーム購読

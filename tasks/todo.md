@@ -10,28 +10,47 @@
 
 ---
 
-## フェーズ 1: プロジェクト基盤構築
+## フェーズ 1: プロジェクト基盤構築 ✅
 
 ### 1.1 Backend セットアップ
 
-- [ ] `backend/` ディレクトリ構造を作成
+- [x] `backend/` ディレクトリ構造を作成
   - `app/`, `app/api/routes/`, `app/services/`, `app/models/`, `app/core/`
-- [ ] `backend/requirements.txt` を作成
-  - fastapi, uvicorn, python-multipart, whisper (faster-whisper), httpx, python-dotenv
-- [ ] `backend/.env.example` を作成
+- [x] `backend/requirements.txt` を作成
+  - fastapi, uvicorn, python-multipart, faster-whisper, httpx, python-dotenv, aiofiles
+- [x] `backend/.env.example` を作成
   - `OLLAMA_BASE_URL`, `STORAGE_ROOT`, `MAX_UPLOAD_SIZE_MB`, `CORS_ORIGINS`
-- [ ] `backend/app/core/config.py` を実装
+- [x] `backend/app/core/config.py` を実装
   - Pydantic Settings で環境変数を型安全に読み込み
-- [ ] `backend/app/main.py` を実装
+- [x] `backend/app/main.py` を実装
   - FastAPI アプリ初期化・CORS・ルーター登録
+- [x] `backend/app/models/schemas.py` を実装
+  - `JobStatus`, `JobSettings`（9設定項目）, `JobInfo`, `UploadResponse`, `Segment`
+- [x] `backend/app/core/job_manager.py` を実装
+  - シングルトン `JobManager`・`Job` dataclass（settings 格納）・スレッドセーフ
+- [x] `backend/app/api/routes/upload.py` を実装
+  - `POST /api/upload`: settings JSON 受け取り・バリデーション・ジョブ登録
+- [x] `backend/app/api/routes/jobs.py` を実装
+  - status / stream / download/srt / download/video エンドポイント（stub 含む）
 
 ### 1.2 Frontend セットアップ
 
-- [ ] `frontend/` に Vue 3 + Vite + TypeScript プロジェクトを初期化
-  - `npm create vue@latest` または `pnpm create vite`
-- [ ] 依存パッケージインストール: axios
-- [ ] `frontend/vite.config.ts` に `/api` → `localhost:8000` プロキシ設定
-- [ ] 不要なボイラープレートを削除・クリーンアップ
+- [x] `frontend/` に Vue 3 + Vite + TypeScript プロジェクトを初期化
+  - `npm create vite@latest` (vue-ts テンプレート)
+- [x] 依存パッケージインストール: axios
+- [x] `frontend/vite.config.ts` に `/api` → `localhost:8000` プロキシ設定
+- [x] 不要なボイラープレートを削除・クリーンアップ
+
+### 1.3 設定画面実装
+
+- [x] `frontend/src/composables/useSettings.ts` を実装
+  - 9項目の `AppSettings` 型・`DEFAULT_SETTINGS`・localStorage 読み書き
+- [x] `frontend/src/components/SettingsModal.vue` を実装
+  - 9設定項目の UI・保存/リセットボタン・ESC/オーバーレイで閉じる
+- [x] `frontend/src/App.vue` を実装
+  - ヘッダーにギアアイコン・`SettingsModal` 統合
+- [x] `frontend/src/api/client.ts` を実装
+  - `uploadVideo(file, settings)`: multipart/form-data で settings を JSON 送信
 
 ---
 
@@ -179,7 +198,18 @@
 
 ## レビューセクション
 
-（実装完了後に記入）
+### フェーズ 1 完了レビュー（2026-03-01）
+
+**実装内容:**
+- Vue 3 + Vite + TypeScript フロントエンド基盤を構築
+- 9項目の設定を localStorage で永続化する `useSettings.ts` composable を実装
+- `SettingsModal.vue` で設定 UI（カテゴリ別グルーピング、保存/リセット）を実装
+- `App.vue` にヘッダーギアアイコンとモーダル統合
+- `api/client.ts` でアップロード時に設定を JSON として multipart に付与
+- FastAPI バックエンド基盤（CORS・ルーター）を構築
+- `JobSettings` Pydantic モデル（9設定項目、バリデーション付き）を定義
+- `JobManager` シングルトン（スレッドセーフ、settings 格納）を実装
+- `/api/upload` エンドポイントで設定受け取りとジョブ登録を実装
 
 ---
 
