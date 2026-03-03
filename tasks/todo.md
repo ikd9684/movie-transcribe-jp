@@ -54,66 +54,36 @@
 
 ---
 
-## フェーズ 2: Backend コア実装
+## フェーズ 2: Backend コア実装 ✅
 
 ### 2.1 スキーマ定義
 
-- [ ] `backend/app/models/schemas.py` を実装
-  - `JobStatus` (Enum: queued/processing/done/error)
-  - `JobInfo` (Pydantic: job_id, status, step, progress, created_at, updated_at, error_message)
-  - `UploadResponse` (job_id, status, message)
-  - `Segment` (start, end, text, ja_text)
+- [x] `backend/app/models/schemas.py` を実装（フェーズ 1 で完了済み）
 
 ### 2.2 ジョブ管理
 
-- [ ] `backend/app/core/job_manager.py` を実装
-  - シングルトン `JobManager` クラス
-  - `create_job()`: UUID 生成・初期化
-  - `update_job()`: step/progress/status 更新
-  - `get_job()`: ジョブ情報取得
-  - スレッドセーフな in-memory dict ストレージ
+- [x] `backend/app/core/job_manager.py` を実装（フェーズ 1 で完了済み）
 
 ### 2.3 サービス層
 
-- [ ] `backend/app/services/video.py` を実装
-  - `extract_audio(input_path, output_path)`: FFmpeg で WAV 抽出 (16kHz, mono)
-  - `burn_subtitles(input_path, srt_path, output_path)`: FFmpeg で字幕焼き込み
-  - subprocess エラーハンドリング
-
-- [ ] `backend/app/services/transcription.py` を実装
-  - `transcribe(audio_path)`: faster-whisper で文字起こし
-  - 戻り値: `list[Segment]` (start, end, text)
-  - モデルロードのキャッシュ（アプリ起動時に一度だけロード）
-
-- [ ] `backend/app/services/translation.py` を実装
-  - `translate_segments(segments)`: Ollama API 呼び出し
-  - システムプロンプト: ニュアンス保持・自然な日本語指示
-  - 文脈付き翻訳: 前後 2 セグメントをコンテキストとして付与
-  - 並列処理: `asyncio.gather` で 4 並列
-  - 戻り値: `list[Segment]` (ja_text 付き)
-
-- [ ] `backend/app/services/subtitle.py` を実装
-  - `generate_srt(segments, output_path)`: SRT フォーマット生成
-  - タイムスタンプフォーマット: `HH:MM:SS,mmm`
+- [x] `backend/app/services/video.py` を実装
+- [x] `backend/app/services/transcription.py` を実装
+- [x] `backend/app/services/translation.py` を実装
+- [x] `backend/app/services/subtitle.py` を実装
 
 ### 2.4 処理パイプライン
 
-- [ ] `backend/app/core/job_manager.py` にパイプライン実行ロジックを追加
-  - `run_pipeline(job_id)`: フェーズ 1〜5 を順次実行
-  - 各フェーズ開始時に `update_job()` で進捗更新
-  - 例外発生時に status=error・error_message 設定
+- [x] `backend/app/core/pipeline.py` を実装
+  - 5ステップ: 音声抽出→文字起こし→翻訳→SRT生成→字幕焼き込み
+  - 進捗 0→20→50→75→85→100%
 
 ### 2.5 API ルート実装
 
-- [ ] `backend/app/api/routes/upload.py` を実装
-  - `POST /api/upload`: ファイル受け取り・バリデーション・保存・ジョブ登録
-  - `BackgroundTasks` でパイプライン起動
-
-- [ ] `backend/app/api/routes/jobs.py` を実装
-  - `GET /api/jobs/{job_id}/stream`: SSE ストリーム (EventSourceResponse or StreamingResponse)
-  - `GET /api/jobs/{job_id}/status`: ジョブステータス JSON 返却
-  - `GET /api/jobs/{job_id}/download/srt`: FileResponse
-  - `GET /api/jobs/{job_id}/download/video`: FileResponse
+- [x] `backend/app/api/routes/upload.py` を修正
+  - `BackgroundTasks` DI 修正・`run_pipeline` 有効化
+- [x] `backend/app/api/routes/jobs.py` を修正
+  - SSE: while ループ + 0.5s sleep で完全実装
+  - download エンドポイント: 409 チェック追加
 
 ---
 
@@ -213,4 +183,17 @@
 
 ---
 
-_最終更新: 2026-03-01_
+### フェーズ 2 完了レビュー（2026-03-02）
+
+**実装内容:**
+- `services/subtitle.py`: SRT 生成（`HH:MM:SS,mmm` 変換、空セグメントスキップ）
+- `services/video.py`: FFmpeg 音声抽出・字幕焼き込み（`run_in_executor` でオフロード）
+- `services/transcription.py`: faster-whisper ラッパー（`threading.Lock` キャッシュ、language="auto"→None 変換）
+- `services/translation.py`: Ollama 並列翻訳（`asyncio.Semaphore` + `asyncio.gather`、文脈付きプロンプト）
+- `core/pipeline.py`: 5ステップパイプライン統合（進捗更新、エラーハンドリング）
+- `api/routes/upload.py`: `BackgroundTasks` DI 修正、`run_pipeline` 有効化
+- `api/routes/jobs.py`: SSE 完全実装、download に 409 チェック追加
+
+---
+
+_最終更新: 2026-03-02_

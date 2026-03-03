@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, UploadFile
 
 from app.core.config import settings
 from app.core.job_manager import job_manager
-from app.models.schemas import JobSettings, UploadResponse, JobStatus
+from app.core.pipeline import run_pipeline
+from app.models.schemas import JobSettings, JobStatus, UploadResponse
 
 router = APIRouter()
 
@@ -18,8 +18,8 @@ MAX_BYTES = settings.max_upload_size_mb * 1024 * 1024
 @router.post("/upload", response_model=UploadResponse, status_code=202)
 async def upload_video(
     file: UploadFile,
+    background_tasks: BackgroundTasks,
     settings_json: str = Form("{}", alias="settings"),
-    background_tasks: BackgroundTasks = BackgroundTasks(),
 ) -> UploadResponse:
     # Validate extension
     ext = Path(file.filename or "").suffix.lower()
@@ -53,6 +53,6 @@ async def upload_video(
 
     dest.write_bytes(content)
 
-    # background_tasks.add_task(run_pipeline, job_id)  # Phase 2
+    background_tasks.add_task(run_pipeline, job_id)
 
     return UploadResponse(job_id=job_id, status=JobStatus.queued)
