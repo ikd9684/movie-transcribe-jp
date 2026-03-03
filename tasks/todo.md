@@ -131,13 +131,13 @@
 
 ### 4.1 Backend 単体確認
 
-- [ ] `uvicorn app.main:app --reload` で起動確認
-- [ ] cURL でアップロード・SSE・ダウンロード動作確認
+- [x] `uvicorn app.main:app --reload` で起動確認
+- [x] cURL でアップロード・SSE・ダウンロード動作確認
 - [ ] 小さい動画ファイルで全パイプライン動作確認
 
 ### 4.2 Frontend 動作確認
 
-- [ ] `npm run dev` で起動確認
+- [x] `npm run dev` で起動確認（TypeScript ビルドエラーなし）
 - [ ] ドラッグ&ドロップが機能するか確認
 - [ ] SSE が正しく進捗を表示するか確認
 - [ ] ダウンロードボタンが機能するか確認
@@ -198,6 +198,23 @@
 - `components/ProcessingStatus.vue`: 5ステップ定義（threshold方式）・0.5s transitionプログレスバー・error時「やり直す」ボタン・`watch(status)`でdone emit
 - `components/ResultDownloader.vue`: SRT/動画ダウンロードボタン・`useJob`のdownload関数利用・restart emit
 - `App.vue`: PageState型（upload/processing/done）・3コンポーネント条件切り替え・onUploaded/onRetry/onRestart ハンドラ
+
+---
+
+### フェーズ 4 部分完了レビュー（2026-03-03）
+
+**実施内容:**
+- `services/video.py` Bug Fix:
+  - `alignment` `6`（中段右）→ `8`（上段中央）に修正（subtitle_position="top" 時）
+  - SRT パスエスケープにシングルクォート `'` → `\'` を追加
+- Backend 全モジュール import チェック: 全11モジュール OK
+- uvicorn 起動・`/docs` Swagger UI (HTTP 200) 確認
+- Frontend `npm run build` TypeScript コンパイル・Vite ビルド成功
+- cURL 検証:
+  - `GET /api/jobs/nonexistent/status` → 404 "Job not found" ✅
+  - `POST /api/upload` → 202 job_id 返却 ✅
+  - `GET /api/jobs/{id}/status` → pipeline 起動・FFmpeg エラーで "error" 遷移 ✅
+  - `GET /api/jobs/{id}/stream` → SSE でエラー状態を配信して終了 ✅
 
 ---
 
