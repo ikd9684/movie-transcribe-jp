@@ -17,7 +17,7 @@ def _get_model(model_name: str) -> WhisperModel:
     """Load and cache WhisperModel by name (thread-safe)."""
     with _cache_lock:
         if model_name not in _model_cache:
-            _model_cache[model_name] = WhisperModel(model_name, device="auto")
+            _model_cache[model_name] = WhisperModel(model_name, device="cpu", compute_type="int8")
         return _model_cache[model_name]
 
 
