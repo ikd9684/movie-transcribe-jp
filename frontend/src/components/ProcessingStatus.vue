@@ -12,19 +12,26 @@
       />
     </div>
 
-    <p class="step-text">{{ stepLabel }}</p>
+    <p class="step-text">
+      {{ stepLabel }}
+      <span v-if="elapsedText" class="elapsed-text">（{{ elapsedText }}）</span>
+    </p>
 
     <ul class="step-list">
       <li
-        v-for="s in STEPS"
+        v-for="(s, i) in STEPS"
         :key="s.label"
         class="step-list__item"
-        :class="{ 'step-list__item--done': progress >= s.threshold }"
+        :class="{
+          'step-list__item--done': progress >= s.threshold,
+          'step-list__item--active': i === activeIndex,
+        }"
       >
         <span class="step-list__icon">
           <svg v-if="progress >= s.threshold" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12" />
           </svg>
+          <span v-else-if="i === activeIndex" class="step-list__spinner" />
           <span v-else class="step-list__dot" />
         </span>
         {{ s.label }}
@@ -39,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, watch, ref, onMounted, onUnmounted } from 'vue'
 import { useJob } from '../composables/useJob'
 
 const props = defineProps<{ jobId: string }>()
@@ -59,6 +66,34 @@ const stepLabel = computed(() => {
   if (status.value === 'done') return '完了'
   if (status.value === 'error') return ''
   return step.value || '待機中...'
+})
+
+const activeIndex = computed(() => {
+  if (status.value === 'done' || status.value === 'error') return -1
+  return STEPS.findIndex(s => progress.value < s.threshold)
+})
+
+// Elapsed time counter
+const elapsedSeconds = ref(0)
+let timer: ReturnType<typeof setInterval> | null = null
+
+onMounted(() => {
+  timer = setInterval(() => {
+    if (status.value !== 'done' && status.value !== 'error') {
+      elapsedSeconds.value++
+    }
+  }, 1000)
+})
+
+onUnmounted(() => {
+  if (timer !== null) clearInterval(timer)
+})
+
+const elapsedText = computed(() => {
+  if (status.value === 'done' || status.value === 'error' || elapsedSeconds.value === 0) return ''
+  const m = Math.floor(elapsedSeconds.value / 60)
+  const s = elapsedSeconds.value % 60
+  return m > 0 ? `${m}分${s}秒経過` : `${s}秒経過`
 })
 
 watch(status, (val) => {
@@ -129,6 +164,11 @@ watch(status, (val) => {
   color: #1a1a1a;
 }
 
+.step-list__item--active {
+  color: #6366f1;
+  font-weight: 500;
+}
+
 .step-list__icon {
   display: flex;
   align-items: center;
@@ -145,6 +185,25 @@ watch(status, (val) => {
   height: 6px;
   border-radius: 50%;
   background: #d1d5db;
+}
+
+.step-list__spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.elapsed-text {
+  color: #9ca3af;
+  font-size: 0.8rem;
 }
 
 .error-section {

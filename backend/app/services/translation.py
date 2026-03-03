@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 
 import httpx
 
@@ -64,15 +65,24 @@ async def _translate_one(
 async def translate_segments(
     segments: list[Segment],
     job_settings: JobSettings,
+    on_progress: Callable[[float], None] | None = None,
 ) -> list[Segment]:
     """Translate all segments in parallel, limited by translation_parallel."""
     if not segments:
         return segments
 
+    total = len(segments)
+    done = 0
     sem = asyncio.Semaphore(job_settings.translation_parallel)
+
+    async def _translate_and_notify(idx: int) -> Segment:
+        nonlocal done
+        result = await _translate_one(client, sem, segments, idx, job_settings)
+        done += 1
+        if on_progress:
+            on_progress(done / total)
+        return result
+
     async with httpx.AsyncClient() as client:
-        tasks = [
-            _translate_one(client, sem, segments, i, job_settings)
-            for i in range(len(segments))
-        ]
+        tasks = [_translate_and_notify(i) for i in range(total)]
         return list(await asyncio.gather(*tasks))

@@ -49,16 +49,27 @@ async def run_pipeline(job_id: str) -> None:
 
         # Step 2: 文字起こし (20% → 50%)
         job_manager.update_job(job_id, step="文字起こし中", progress=20)
+
+        def _transcription_progress(ratio: float) -> None:
+            job_manager.update_job(job_id, progress=20 + int(ratio * 30))
+
         segments = await transcription.transcribe(
             audio_path,
             job_settings.whisper_model,
             job_settings.whisper_language,
+            on_progress=_transcription_progress,
         )
         job_manager.update_job(job_id, progress=50)
 
         # Step 3: 翻訳 (50% → 75%)
         job_manager.update_job(job_id, step="日本語翻訳中", progress=50)
-        segments = await translation.translate_segments(segments, job_settings)
+
+        def _translation_progress(ratio: float) -> None:
+            job_manager.update_job(job_id, progress=50 + int(ratio * 25))
+
+        segments = await translation.translate_segments(
+            segments, job_settings, on_progress=_translation_progress
+        )
         job_manager.update_job(job_id, progress=75)
 
         # Step 4: SRT 生成 (75% → 85%)
