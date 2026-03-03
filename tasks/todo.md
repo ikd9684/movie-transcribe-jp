@@ -87,47 +87,41 @@
 
 ---
 
-## フェーズ 3: Frontend 実装
+## フェーズ 3: Frontend 実装 ✅
 
 ### 3.1 API クライアント
 
-- [ ] `frontend/src/api/client.ts` を実装
-  - axios インスタンス (baseURL: `/api`)
-  - `uploadVideo(file: File): Promise<{ job_id: string }>`
-  - `getJobStatus(jobId: string): Promise<JobInfo>`
+- [x] `frontend/src/api/client.ts` を実装（フェーズ 1 で完了済み）
 
 ### 3.2 Composable
 
-- [ ] `frontend/src/composables/useJob.ts` を実装
-  - `useJob(jobId: Ref<string>)` composable
+- [x] `frontend/src/composables/useJob.ts` を実装
   - `EventSource` で SSE 購読
   - reactive な `status`, `progress`, `step`, `error` を返す
   - done/error でクリーンアップ
+  - `downloadSRT`, `downloadVideo` 関数
 
 ### 3.3 コンポーネント実装
 
-- [ ] `frontend/src/components/VideoUploader.vue` を実装
-  - ドラッグ&ドロップエリア (dragover/drop イベント)
-  - ファイル選択ダイアログ (`<input type="file">`)
+- [x] `frontend/src/components/VideoUploader.vue` を実装
+  - ドラッグ&ドロップエリア + クリック選択
   - ファイル情報表示（名前・サイズ）
-  - 「アップロード開始」ボタン → `uploadVideo()` 呼び出し
-  - バリデーションエラーを UI に表示
+  - 拡張子バリデーション（mp4/mov/avi/mkv/webm/m4v）
+  - アップロード中スピナー
 
-- [ ] `frontend/src/components/ProcessingStatus.vue` を実装
-  - ステップ一覧（アイコン付き）
-  - プログレスバー（progress % で幅変化）
+- [x] `frontend/src/components/ProcessingStatus.vue` を実装
+  - プログレスバー（0.5s transition）
+  - 5ステップ一覧（チェックマーク付き）
   - エラー時: エラーメッセージ + 「やり直す」ボタン
-  - `useJob` composable を使用
 
-- [ ] `frontend/src/components/ResultDownloader.vue` を実装
-  - 「SRTファイルをダウンロード」ボタン → `/api/jobs/{id}/download/srt`
-  - 「字幕付き動画をダウンロード」ボタン → `/api/jobs/{id}/download/video`
-  - 「別の動画を処理する」ボタン → 状態リセット
+- [x] `frontend/src/components/ResultDownloader.vue` を実装
+  - SRT/動画ダウンロードボタン
+  - 「別の動画を処理する」ボタン
 
 ### 3.4 App.vue 統合
 
-- [ ] `frontend/src/App.vue` を実装
-  - ページ状態管理: `upload` / `processing` / `done` / `error`
+- [x] `frontend/src/App.vue` を修正
+  - ページ状態管理: `upload` / `processing` / `done`
   - 各状態でコンポーネント切り替え
   - `job_id` を状態として保持
 
@@ -196,4 +190,15 @@
 
 ---
 
-_最終更新: 2026-03-02_
+### フェーズ 3 完了レビュー（2026-03-03）
+
+**実装内容:**
+- `composables/useJob.ts`: EventSource SSE購読・status/step/progress/error管理・done/errorで自動クローズ・`onUnmounted`クリーンアップ・downloadSRT/downloadVideo
+- `components/VideoUploader.vue`: ドラッグ&ドロップ+クリック選択・拡張子バリデーション（6形式）・アップロード中スピナー・`emit('uploaded', job_id)`
+- `components/ProcessingStatus.vue`: 5ステップ定義（threshold方式）・0.5s transitionプログレスバー・error時「やり直す」ボタン・`watch(status)`でdone emit
+- `components/ResultDownloader.vue`: SRT/動画ダウンロードボタン・`useJob`のdownload関数利用・restart emit
+- `App.vue`: PageState型（upload/processing/done）・3コンポーネント条件切り替え・onUploaded/onRetry/onRestart ハンドラ
+
+---
+
+_最終更新: 2026-03-03_

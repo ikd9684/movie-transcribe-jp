@@ -11,8 +11,21 @@
     </header>
 
     <main class="main">
-      <!-- Phase 2 以降でコンポーネントを追加 -->
-      <p class="placeholder">動画をアップロードして字幕を生成します。</p>
+      <VideoUploader
+        v-if="pageState === 'upload'"
+        @uploaded="onUploaded"
+      />
+      <ProcessingStatus
+        v-else-if="pageState === 'processing'"
+        :job-id="jobId!"
+        @done="pageState = 'done'"
+        @retry="onRetry"
+      />
+      <ResultDownloader
+        v-else
+        :job-id="jobId!"
+        @restart="onRestart"
+      />
     </main>
 
     <SettingsModal v-if="showSettings" @close="showSettings = false" />
@@ -22,8 +35,29 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import SettingsModal from './components/SettingsModal.vue'
+import VideoUploader from './components/VideoUploader.vue'
+import ProcessingStatus from './components/ProcessingStatus.vue'
+import ResultDownloader from './components/ResultDownloader.vue'
+
+type PageState = 'upload' | 'processing' | 'done'
 
 const showSettings = ref(false)
+const pageState = ref<PageState>('upload')
+const jobId = ref<string | null>(null)
+
+function onUploaded(id: string): void {
+  jobId.value = id
+  pageState.value = 'processing'
+}
+
+function onRetry(): void {
+  pageState.value = 'upload'
+}
+
+function onRestart(): void {
+  jobId.value = null
+  pageState.value = 'upload'
+}
 </script>
 
 <style>
@@ -89,8 +123,4 @@ body {
   justify-content: center;
 }
 
-.placeholder {
-  color: #9ca3af;
-  font-size: 0.95rem;
-}
 </style>
