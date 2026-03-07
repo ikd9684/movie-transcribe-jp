@@ -3,7 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 
 class JobStatus(str, Enum):
@@ -14,6 +15,8 @@ class JobStatus(str, Enum):
 
 
 class JobSettings(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
     whisper_model: str = "large-v3"
     whisper_language: str = "auto"
     ollama_base_url: str = "http://localhost:11434"

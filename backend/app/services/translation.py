@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Callable
 
 import httpx
 
 from app.models.schemas import JobSettings, Segment
+
+logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = (
     "あなたは字幕翻訳の専門家です。"
@@ -83,6 +86,7 @@ async def translate_segments(
             on_progress(done / total)
         return result
 
+    logger.info("翻訳開始: url=%s model=%s segments=%d", job_settings.ollama_base_url, job_settings.translation_model, total)
     async with httpx.AsyncClient() as client:
         tasks = [_translate_and_notify(i) for i in range(total)]
         return list(await asyncio.gather(*tasks))

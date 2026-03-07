@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 from app.core.config import settings
 from app.core.job_manager import job_manager
@@ -89,26 +92,36 @@ async def run_pipeline(job_id: str) -> None:
         )
 
     except RuntimeError as exc:
+        logger.error("[job:%s] RuntimeError: %s", job_id, exc, exc_info=True)
         job_manager.update_job(
             job_id,
             status=JobStatus.error,
             error_message=f"処理エラー: {exc}",
         )
     except httpx.ConnectError as exc:
+        logger.error("[job:%s] Ollama 接続エラー: %s", job_id, exc, exc_info=True)
         job_manager.update_job(
             job_id,
             status=JobStatus.error,
             error_message=f"Ollama への接続に失敗しました: {exc}",
         )
     except httpx.HTTPStatusError as exc:
+        logger.error(
+            "[job:%s] Ollama HTTP エラー %s: %s",
+            job_id,
+            exc.response.status_code,
+            exc.response.text[:500],
+            exc_info=True,
+        )
         job_manager.update_job(
             job_id,
             status=JobStatus.error,
             error_message=f"翻訳 API エラー (HTTP {exc.response.status_code}): {exc.response.text[:200]}",
         )
     except Exception as exc:  # noqa: BLE001
+        logger.error("[job:%s] 予期しないエラー: %s", job_id, exc, exc_info=True)
         job_manager.update_job(
             job_id,
             status=JobStatus.error,
-            error_message=f"予期しないエラーが発生しました: {exc}",
+            error_message=f"予期しないエラー: {type(exc).__name__}: {exc}",
         )

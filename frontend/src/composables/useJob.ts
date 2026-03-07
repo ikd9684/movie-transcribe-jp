@@ -6,7 +6,7 @@ export interface JobProgress {
   status: JobStatus
   step: string
   progress: number
-  error: string | null
+  error_message: string | null
 }
 
 export function useJob(jobId: string) {
@@ -23,7 +23,7 @@ export function useJob(jobId: string) {
       status.value = data.status
       step.value = data.step ?? ''
       progress.value = data.progress ?? 0
-      error.value = data.error ?? null
+      error.value = data.error_message ?? null
 
       if (data.status === 'done' || data.status === 'error') {
         es?.close()

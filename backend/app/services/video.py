@@ -37,17 +37,16 @@ async def burn_subtitles(
 ) -> None:
     """Burn SRT subtitles into video using FFmpeg libass."""
     alignment = 2 if job_settings.subtitle_position == "bottom" else 8
-    force_style = (
-        f"FontSize={job_settings.subtitle_font_size},"
-        f"Alignment={alignment}"
-    )
-    # Escape path for libass filter (backslashes, colons, and single quotes must be escaped)
-    srt_escaped = str(srt_path).replace("\\", "/").replace(":", "\\:").replace("'", "\\'")
+    force_style = f"FontSize={job_settings.subtitle_font_size},Alignment={alignment}"
+    # FFmpeg's own filter parser recognizes single quotes as delimiters (not shell).
+    # Wrap path and force_style in single quotes; escape any literal ' in values.
+    srt_quoted = str(srt_path.resolve()).replace("'", "\\'")
+    force_style_quoted = force_style.replace("'", "\\'")
 
     cmd = [
         "ffmpeg", "-y",
         "-i", str(input_path),
-        "-vf", f"subtitles={srt_escaped}:force_style='{force_style}'",
+        "-vf", f"subtitles='{srt_quoted}':force_style='{force_style_quoted}'",
         "-crf", str(job_settings.output_crf),
         "-preset", "fast",
         str(output_path),
