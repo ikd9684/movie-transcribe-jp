@@ -28,7 +28,7 @@
       />
     </main>
 
-    <SettingsModal v-if="showSettings" @close="showSettings = false" />
+    <SettingsModal v-if="showSettings" @close="showSettings = false" @storage-cleared="onStorageCleared" />
   </div>
 </template>
 
@@ -55,6 +55,11 @@ function onRetry(): void {
 }
 
 function onRestart(): void {
+  jobId.value = null
+  pageState.value = 'upload'
+}
+
+function onStorageCleared(): void {
   jobId.value = null
   pageState.value = 'upload'
 }

@@ -100,6 +100,15 @@
         </div>
       </section>
 
+      <section class="danger-section">
+        <h3>ストレージ</h3>
+        <p class="danger-description">アップロードされた動画・生成された字幕・出力動画をすべて削除します。</p>
+        <button class="btn-danger" :disabled="clearing" @click="onClearStorage">
+          {{ clearing ? '削除中...' : 'ストレージをクリア' }}
+        </button>
+        <p v-if="clearResult" class="clear-result">{{ clearResult }}</p>
+      </section>
+
       <div class="actions">
         <button class="btn-secondary" @click="onReset">リセット</button>
         <button class="btn-primary" @click="onSave">保存して閉じる</button>
@@ -109,14 +118,17 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted, onUnmounted } from 'vue'
+import { reactive, ref, onMounted, onUnmounted } from 'vue'
 import { useSettings, type AppSettings } from '../composables/useSettings'
+import { clearStorage } from '../api/client'
 
-const emit = defineEmits<{ close: [] }>()
+const emit = defineEmits<{ close: []; storageCleared: [] }>()
 
 const { settings, save, reset } = useSettings()
 
 const local = reactive<AppSettings>({ ...settings })
+const clearing = ref(false)
+const clearResult = ref('')
 
 function onSave() {
   Object.assign(settings, local)
@@ -127,6 +139,19 @@ function onSave() {
 function onReset() {
   reset()
   Object.assign(local, settings)
+}
+
+async function onClearStorage() {
+  if (!confirm('ストレージをすべて削除しますか？\nアップロード済みファイルと生成済みファイルが削除されます。')) return
+  clearing.value = true
+  clearResult.value = ''
+  try {
+    const { deleted_mb } = await clearStorage()
+    clearResult.value = `${deleted_mb} MB を削除しました。`
+    emit('storageCleared')
+  } finally {
+    clearing.value = false
+  }
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -247,5 +272,49 @@ select:focus {
 
 .btn-secondary:hover {
   background: #f3f4f6;
+}
+
+.danger-section {
+  border-top: 1px solid #fee2e2;
+  padding-top: 16px;
+  margin-bottom: 20px;
+}
+
+.danger-section h3 {
+  color: #ef4444;
+  border-bottom-color: #fee2e2;
+}
+
+.danger-description {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.btn-danger {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #ef4444;
+  color: #fff;
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.clear-result {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #6b7280;
 }
 </style>

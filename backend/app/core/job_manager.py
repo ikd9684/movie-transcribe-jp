@@ -59,5 +59,9 @@ class JobManager:
                 job.error_message = error_message
             job.updated_at = datetime.utcnow()
 
+    def clear(self) -> None:
+        with self._lock:
+            self._jobs.clear()
+
 
 job_manager = JobManager()

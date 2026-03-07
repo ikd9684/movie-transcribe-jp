@@ -3,6 +3,11 @@ import type { AppSettings } from '../composables/useSettings'
 
 const http = axios.create({ baseURL: '/api' })
 
+export async function clearStorage(): Promise<{ deleted_mb: number }> {
+  const { data } = await http.delete<{ deleted_mb: number }>('/storage')
+  return data
+}
+
 export async function uploadVideo(
   file: File,
   settings: AppSettings,

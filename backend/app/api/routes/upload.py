@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, UploadFile
 
 from app.core.config import settings
 from app.core.job_manager import job_manager
-from app.core.pipeline import run_pipeline
 from app.models.schemas import JobSettings, JobStatus, UploadResponse
+from app.core.pipeline import run_pipeline
 
 router = APIRouter()
 
@@ -56,3 +57,21 @@ async def upload_video(
     background_tasks.add_task(run_pipeline, job_id)
 
     return UploadResponse(job_id=job_id, status=JobStatus.queued)
+
+
+@router.delete("/storage", status_code=200)
+async def clear_storage() -> dict:
+    """Delete all files under storage/uploads and storage/outputs."""
+    storage_root = Path(settings.storage_root)
+    deleted_bytes = 0
+
+    for sub in ("uploads", "outputs"):
+        target = storage_root / sub
+        if target.exists():
+            deleted_bytes += sum(f.stat().st_size for f in target.rglob("*") if f.is_file())
+            shutil.rmtree(target)
+            target.mkdir(parents=True, exist_ok=True)
+
+    job_manager.clear()
+
+    return {"deleted_mb": round(deleted_bytes / 1024 / 1024, 1)}
