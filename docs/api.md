@@ -21,6 +21,7 @@
 | GET | `/api/jobs/{job_id}/status` | ジョブステータス取得 |
 | GET | `/api/jobs/{job_id}/download/srt` | SRT ファイルダウンロード |
 | GET | `/api/jobs/{job_id}/download/video` | 字幕付き動画ダウンロード |
+| DELETE | `/api/storage` | ストレージ全削除 |
 
 ---
 
@@ -266,6 +267,24 @@ Content-Length: (ファイルサイズ)
 | 404 | ジョブ未発見 | `{"detail": "指定されたジョブが見つかりません"}` |
 | 409 | 処理未完了 | `{"detail": "処理がまだ完了していません。status が done になるまでお待ちください"}` |
 | 500 | ファイル読み取りエラー | `{"detail": "動画ファイルの取得に失敗しました"}` |
+
+---
+
+## DELETE `/api/storage`
+
+`storage/uploads/` と `storage/outputs/` 以下のファイルをすべて削除し、ジョブ履歴もクリアする。
+
+### レスポンス — 成功 `200 OK`
+
+```json
+{
+  "deleted_mb": 142.3
+}
+```
+
+| フィールド | 型 | 説明 |
+|-----------|-----|------|
+| `deleted_mb` | float | 削除したファイルの合計サイズ (MB) |
 
 ---
 
