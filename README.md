@@ -73,27 +73,18 @@ ollama serve
 ollama pull gpt-oss:20b   # または任意の LLM モデル
 ```
 
-### 3. バックエンドの起動
+### 3. セットアップ
 
 ```bash
-cd backend
-python -m venv .venv
-.venv/bin/pip install -r requirements.txt
-
-cp .env.example .env
-# .env の OLLAMA_BASE_URL を環境に合わせて編集
-
-.venv/bin/uvicorn app.main:app --reload
-# → http://localhost:8000
+make setup
+# backend/.env の OLLAMA_BASE_URL を環境に合わせて編集
 ```
 
-### 4. フロントエンドの起動
+### 4. 起動
 
 ```bash
-cd frontend
-npm install
-npm run dev
-# → http://localhost:5173
+make backend   # → http://localhost:8000
+make frontend  # → http://localhost:5173
 ```
 
 ブラウザで `http://localhost:5173` を開き、動画をドラッグ&ドロップしてください。
