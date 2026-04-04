@@ -31,3 +31,6 @@ app.include_router(jobs.router, prefix="/api")
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok"}
+
+from fastapi.staticfiles import StaticFiles
+app.mount("/", StaticFiles(directory="../frontend/dist", html=True), name="frontend")

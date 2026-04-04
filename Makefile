@@ -1,14 +1,27 @@
-.PHONY: backend frontend setup setup-backend setup-frontend
+.PHONY: backend frontend setup setup-backend setup-frontend build serve start
 
-# バックエンド起動
+PORT ?= 8000
+
+# フロントエンドをビルド
+build:
+	cd frontend && npm run build
+
+# バックエンド起動（ポータルからはこれを呼ぶ）
+serve:
+	cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $(PORT)
+
+# ビルド＋起動（初回デプロイ時に手動で実行）
+start: build serve
+
+# バックエンド起動（開発用、既存のまま）
 backend:
 	cd backend && .venv/bin/uvicorn app.main:app --reload
 
-# フロントエンド起動
+# フロントエンド起動（開発用、既存のまま）
 frontend:
 	cd frontend && npm run dev
 
-# 初回セットアップ
+# 初回セットアップ（既存のまま）
 setup: setup-backend setup-frontend
 
 setup-backend:
