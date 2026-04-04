@@ -1,7 +1,7 @@
 import axios from 'axios'
 import type { AppSettings } from '../composables/useSettings'
 
-const http = axios.create({ baseURL: '/api' })
+const http = axios.create({ baseURL: '/movie-transcribe/api' })
 
 export async function clearStorage(): Promise<{ deleted_mb: number }> {
   const { data } = await http.delete<{ deleted_mb: number }>('/storage')
