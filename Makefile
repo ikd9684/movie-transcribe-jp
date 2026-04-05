@@ -25,7 +25,7 @@ frontend:
 setup: setup-backend setup-frontend
 
 setup-backend:
-	cd backend && python -m venv .venv && .venv/bin/pip install -r requirements.txt
+	cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 	@if [ ! -f backend/.env ]; then cp backend/.env.example backend/.env; echo "backend/.env を作成しました。内容を確認してください。"; fi
 
 setup-frontend:
