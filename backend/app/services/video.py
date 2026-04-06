@@ -46,7 +46,7 @@ async def burn_subtitles(
     cmd = [
         "ffmpeg", "-y",
         "-i", str(input_path),
-        "-vf", f"subtitles='{srt_quoted}':force_style='{force_style_quoted}'",
+        "-vf", f"subtitles=filename='{srt_quoted}':force_style='{force_style_quoted}'",
         "-crf", str(job_settings.output_crf),
         "-preset", "fast",
         str(output_path),
