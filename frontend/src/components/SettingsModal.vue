@@ -38,7 +38,11 @@
         </div>
         <div class="field">
           <label for="translationModel">LLM モデル</label>
-          <input id="translationModel" v-model="local.translationModel" type="text" />
+          <select id="translationModel" v-model="local.translationModel" :disabled="modelLoading">
+            <option v-if="modelLoading" value="">読み込み中...</option>
+            <option v-for="m in modelOptions" :key="m" :value="m">{{ m }}</option>
+          </select>
+          <span v-if="modelError" class="model-error">{{ modelError }}</span>
         </div>
         <div class="field">
           <label for="translationParallel">翻訳並列数</label>
@@ -118,7 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, onUnmounted } from 'vue'
+import { reactive, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useSettings, type AppSettings } from '../composables/useSettings'
 import { clearStorage } from '../api/client'
 
@@ -129,6 +133,34 @@ const { settings, save, reset } = useSettings()
 const local = reactive<AppSettings>({ ...settings })
 const clearing = ref(false)
 const clearResult = ref('')
+
+const modelOptions = ref<string[]>([])
+const modelLoading = ref(false)
+const modelError = ref('')
+
+async function fetchModels() {
+  modelLoading.value = true
+  modelError.value = ''
+  try {
+    const res = await fetch(`${local.ollamaBaseUrl}/api/tags`)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = await res.json()
+    const names: string[] = (data.models ?? []).map((m: { name: string }) => m.name)
+    // 現在の選択値がリストにない場合は先頭に追加
+    if (local.translationModel && !names.includes(local.translationModel)) {
+      names.unshift(local.translationModel)
+    }
+    modelOptions.value = names
+  } catch (e) {
+    modelError.value = 'Ollama に接続できませんでした。URL を確認してください。'
+    // 現在値だけをフォールバックとして残す
+    if (local.translationModel) modelOptions.value = [local.translationModel]
+  } finally {
+    modelLoading.value = false
+  }
+}
+
+watch(() => local.ollamaBaseUrl, fetchModels)
 
 function onSave() {
   Object.assign(settings, local)
@@ -158,7 +190,10 @@ function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') emit('close')
 }
 
-onMounted(() => document.addEventListener('keydown', onKeydown))
+onMounted(() => {
+  document.addEventListener('keydown', onKeydown)
+  fetchModels()
+})
 onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 </script>
 
@@ -316,5 +351,10 @@ select:focus {
   margin-top: 8px;
   font-size: 0.85rem;
   color: #6b7280;
+}
+
+.model-error {
+  font-size: 0.8rem;
+  color: #ef4444;
 }
 </style>
