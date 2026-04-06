@@ -142,7 +142,7 @@ async function fetchModels() {
   modelLoading.value = true
   modelError.value = ''
   try {
-    const res = await fetch(`${local.ollamaBaseUrl}/api/tags`)
+    const res = await fetch(`/api/ollama/models?base_url=${encodeURIComponent(local.ollamaBaseUrl)}`)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const data = await res.json()
     const names: string[] = (data.models ?? []).map((m: { name: string }) => m.name)
